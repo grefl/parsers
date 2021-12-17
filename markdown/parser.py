@@ -90,6 +90,7 @@ class MarkDownParser:
         self.html.append('\n')
         writable = Path('./res.html')
         writable.write_text('\n'.join(self.html))
+
     def consume_whitespace(self):
         while not self.eof() and self.char != ' ' and self.char != '\t':
             self.char = self.get_char()
