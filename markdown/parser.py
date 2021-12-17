@@ -95,7 +95,7 @@ class MarkDownParser:
             self.char = self.get_char()
             self.cur += 1
             if self.char == '\n':
-                self.sline = True
+                self.line_meta.start_line = True
                 break
             if self.char != ' ' or self.char != '\t':
                 break
