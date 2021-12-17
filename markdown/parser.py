@@ -52,17 +52,22 @@ class MarkDownParser:
         while not self.eof() and self.char is not None:
             # if self.line_meta.start_line and self.is_whitespace():
             #    self.consume_whitespace()
-            if self.char == '-' or self.char == '*':
+            if self.char == '-' or self.char == '*' or self.char == '+':
                 self.line_meta['start_line'] = False
                 lines = []
                 IN = True
+                list_type = self.char
+                line = self.consume_line()
+                lines.append(f'  <li>{line}</li>')
                 while IN:
-                    line = self.consume_line()
-                    lines.append(f'  <li>{line}</li>')
-                    self.char = self.get_char()
-                    if self.char != '-':
+                    print(self.cur, self.char)
+                    if self.peek() != list_type:
                         print('out')
                         IN = False
+                        break
+                    self.char = self.get_char()
+                    line = self.consume_line()
+                    lines.append(f'  <li>{line}</li>')
                 items = '\n'.join(lines)
                 self.html.append(f'<ul>\n{items}\n</ul>')
             elif self.char == '#':
@@ -79,7 +84,7 @@ class MarkDownParser:
                 self.html.append(f'<blockquote>{line}</blockquote>')
 
             elif self.char == '\n':
-                self.sline = True
+                print('new line')
 
             self.char = self.get_char()           
         self.html.append('\n')
@@ -98,7 +103,8 @@ class MarkDownParser:
     def consume_line(self):
         self.char = self.get_char()
         chars = []
-        while self.char != '\n': 
+        while self.char and self.char != '\n': 
+            print(self.char)
             chars.append(self.char)
             self.char = self.get_char()
         return ''.join(chars).strip()
