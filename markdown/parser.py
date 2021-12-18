@@ -79,7 +79,7 @@ class MarkDownParser:
                     self.char = self.get_char()
                     num_hashes +=1
                 line = self.consume_line()
-                self.html.append(f'<h{num_hashes}>{line}</h{num_hashes}>')
+                self.html.append(f'<h{num_hashes}>{self.parse_line(line)}</h{num_hashes}>')
             elif self.char == '[':
                 curr_char = self.char
                 line = self.consume_line()
@@ -87,7 +87,7 @@ class MarkDownParser:
                 self.html.append(parsed_line)
             elif self.char == '>':
                 line = self.consume_line()
-                self.html.append(f'<blockquote>{line}</blockquote>')
+                self.html.append(f'<blockquote>{self.parse_line(line)}</blockquote>')
 
             elif self.char == '\n':
                 print('new line')
@@ -141,7 +141,7 @@ class MarkDownParser:
                         if state['type'] == 'img':
                             string = f'<img alt="{text}" src="{url}" />'
                         else:
-                            string = f'<a href={url}>{text}</a>'
+                            string = f'<a href="{url}">{text}</a>'
                         chars.append(string)
                         state['IN'] = False
                         i += j
