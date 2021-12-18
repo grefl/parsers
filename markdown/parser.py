@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+import unittest
 
 #============START============
 
@@ -19,6 +20,11 @@ def main():
 
 def token(type, char):
     return { 'type': type, 'char': char }
+
+def peek(text, i):
+    if i+ 1 < len(text):
+        return text[i+ 1]
+    return False
 
 TOKENS = {
         'heading': 'heading',
@@ -60,9 +66,7 @@ class MarkDownParser:
                 line = self.consume_line()
                 lines.append(f'  <li>{line}</li>')
                 while IN:
-                    print(self.cur, self.char)
                     if self.peek() != list_type:
-                        print('out')
                         IN = False
                         break
                     self.char = self.get_char()
@@ -78,7 +82,10 @@ class MarkDownParser:
                 line = self.consume_line()
                 self.html.append(f'<h{num_hashes}>{line}</h{num_hashes}>')
             elif self.char == '[':
-                print(self.char)
+                curr_char = self.char
+                line = self.consume_line()
+                parsed_line = self.parse_line(curr_char + line)
+                self.html.append(parsed_line)
             elif self.char == '>':
                 line = self.consume_line()
                 self.html.append(f'<blockquote>{line}</blockquote>')
@@ -100,12 +107,58 @@ class MarkDownParser:
                 break
             if self.char != ' ' or self.char != '\t':
                 break
-
+    def parse_line(self,text):
+        i = 0
+        char = text[i]
+        state = { 'IN': False, 'type': None, 'offset': { 'img': 2, 'a': 1 }, 'start_index': -1, 'next_index': -1 }
+        chars = []
+        while i < len(text):
+            if char == '[' or char == '!':
+                type = 'img' if char == '!' else 'a'
+                state = {**state, 'IN': True, 'type': type, 'start_index': i}
+                failed = False
+                temp_chars = []
+                j = 0
+                while state['IN'] and i + j < len(text):
+                    if char == ']' and peek(text, i + j) == '(':
+                        temp_chars.append(char)
+                        state['next_index'] = j 
+                    elif char == ']' and peek(text, i + j) != '(':
+                        temp_chars.append(char)
+                        for c in temp_chars:
+                            chars.append(c)
+                        i += j 
+                        state['IN'] = False
+                        break
+                    elif char == ')' and state['next_index'] != -1:
+                        m_index = state['next_index']
+                        offset = state['offset'][state['type']]
+                        text = temp_chars[offset:m_index]
+                        text = ''.join(text)
+                        string = None
+                        url = temp_chars[m_index +2:]
+                        url = ''.join(url)
+                        if state['type'] == 'img':
+                            string = f'<img alt="{text}" src="{url}" />'
+                        else:
+                            string = f'<a href={url}>{text}</a>'
+                        print(string)
+                        chars.append(string)
+                        state['IN'] = False
+                        i += j
+                        break
+                    else:
+                        temp_chars.append(char)
+                    j +=1
+                    char = text[i + j]
+            else:
+                chars.append(char)
+        return f'<p>{text}</p>'
+    
     def consume_line(self):
         self.char = self.get_char()
         chars = []
         while self.char and self.char != '\n': 
-            print(self.char)
             chars.append(self.char)
             self.char = self.get_char()
         return ''.join(chars).strip()
@@ -128,6 +181,13 @@ class MarkDownParser:
     def eof(self):
        return self.cur >= self.len
 
+class Testing(unittest.TestCase):
 
+    def test_upper(self):
+        p = MarkDownParser('#')
+        res = p.parse_line('![test](https)')
+        self.assertEqual(res, '<a href="https">test</a>')
+        
 if __name__ == '__main__':
-    main()
+    # main()
+    unittest.main()
