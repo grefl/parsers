@@ -150,6 +150,28 @@ class MarkDownParser:
                         temp_chars.append(char)
                     j +=1
                     char = text[i + j]
+            elif char == '`':
+                start = i
+                temp_chars = []
+                temp_chars.append(char)
+                j = 1
+                char = text[i + j]
+                while i + j < len(text) and char != '`': 
+                   print(char)
+                   temp_chars.append(char) 
+                   j += 1
+                   char = text[i+j]
+
+                if char == '`':
+                    text = ''.join(temp_chars[1:])
+                    string = f'<pre><code>{text}</code></pre>'
+                    chars.append(string)
+                else:
+                    for c in temp_chars:
+                        print(f'here {c}')
+
+                        chars.append(c)
+                i += j
             else:
                 chars.append(char)
                 i += 1
