@@ -1,6 +1,5 @@
 import sys
 from pathlib import Path
-import unittest
 
 #============START============
 
@@ -64,14 +63,14 @@ class MarkDownParser:
                 IN = True
                 list_type = self.char
                 line = self.consume_line()
-                lines.append(f'  <li>{line}</li>')
+                lines.append(f'  <li>{self.parse_line(line)}</li>')
                 while IN:
                     if self.peek() != list_type:
                         IN = False
                         break
                     self.char = self.get_char()
                     line = self.consume_line()
-                    lines.append(f'  <li>{line}</li>')
+                    lines.append(f'  <li>{self.parse_line(line)}</li>')
                 items = '\n'.join(lines)
                 self.html.append(f'<ul>\n{items}\n</ul>')
             elif self.char == '#':
@@ -113,6 +112,7 @@ class MarkDownParser:
         state = { 'IN': False, 'type': None, 'offset': { 'img': 2, 'a': 1 }, 'start_index': -1, 'next_index': -1 }
         chars = []
         while i < len(text):
+            char = text[i]
             if char == '[' or char == '!':
                 type = 'img' if char == '!' else 'a'
                 state = {**state, 'IN': True, 'type': type, 'start_index': i}
@@ -142,7 +142,6 @@ class MarkDownParser:
                             string = f'<img alt="{text}" src="{url}" />'
                         else:
                             string = f'<a href={url}>{text}</a>'
-                        print(string)
                         chars.append(string)
                         state['IN'] = False
                         i += j
@@ -153,7 +152,8 @@ class MarkDownParser:
                     char = text[i + j]
             else:
                 chars.append(char)
-        return f'<p>{text}</p>'
+                i += 1
+        return ''.join(chars)
     
     def consume_line(self):
         self.char = self.get_char()
@@ -181,13 +181,5 @@ class MarkDownParser:
     def eof(self):
        return self.cur >= self.len
 
-class Testing(unittest.TestCase):
-
-    def test_upper(self):
-        p = MarkDownParser('#')
-        res = p.parse_line('![test](https)')
-        self.assertEqual(res, '<a href="https">test</a>')
-        
 if __name__ == '__main__':
-    # main()
-    unittest.main()
+    main()
