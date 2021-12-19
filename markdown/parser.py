@@ -29,14 +29,6 @@ def next_char(text, i):
         return text[i + 1]
     return None
 
-TOKENS = {
-        'heading': 'heading',
-        'ol': 'ol',
-        'ul': 'ul',
-        'p': 'p',
-        'img': 'img',
-        'a_tag': 'a_tag',
-        }
 
 #============PARSER============
 
