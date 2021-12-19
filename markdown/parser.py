@@ -35,7 +35,6 @@ class MarkDownParser:
         self.string = string
         self.cur = 0
         self.len = len(self.string)
-        self.tokens = []
         self.html = []
         self.char = None
         self.line_meta = {
