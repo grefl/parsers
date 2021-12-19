@@ -91,7 +91,28 @@ class MarkDownParser:
 
             elif self.char == '\n':
                 print('new line')
-
+                # self.cur +=1
+            elif self.char == '`' and peek(self.string, self.cur) == '`' and peek(self.string, self.cur + 1) == '`':
+                lines = []
+                line = self.consume_line()
+                lines.append(line)
+                while self.char and not (self.char == '`' and peek(self.string, self.cur) == '`' and peek(self.string, self.cur + 1) == '`'):
+                   save_char = self.char
+                   line = self.consume_line()
+                   lines.append(save_char + line)
+                   self.char = self.get_char()
+                code = '\n'.join(lines)
+                self.html.append(f'<pre><code>\n{code}\n</code></pre>')
+            elif self.char == '`':
+                lines = []
+                line = self.consume_line()
+                lines.append(line)
+                self.char = self.get_char()
+            else:
+                save_char = self.char
+                print(save_char)
+                line = self.consume_line(strip = False)
+                self.html.append(f'<p>{self.parse_line(save_char + line)}</p>')
             self.char = self.get_char()           
         self.html.append('\n')
         writable = Path('./res.html')
@@ -155,9 +176,10 @@ class MarkDownParser:
                 temp_chars = []
                 temp_chars.append(char)
                 j = 1
+                if i + j >= len(text):
+                    break
                 char = text[i + j]
                 while i + j < len(text) and char != '`': 
-                   print(char)
                    temp_chars.append(char) 
                    j += 1
                    char = text[i+j]
@@ -168,8 +190,6 @@ class MarkDownParser:
                     chars.append(string)
                 else:
                     for c in temp_chars:
-                        print(f'here {c}')
-
                         chars.append(c)
                 i += j
             else:
@@ -177,13 +197,15 @@ class MarkDownParser:
                 i += 1
         return ''.join(chars)
     
-    def consume_line(self):
+    def consume_line(self, strip = True):
         self.char = self.get_char()
         chars = []
         while self.char and self.char != '\n': 
             chars.append(self.char)
             self.char = self.get_char()
-        return ''.join(chars).strip()
+        if strip:
+            return ''.join(chars).strip()
+        return ''.join(chars)
 
     def get_char(self):
        self.cur +=1
