@@ -17,8 +17,6 @@ def main():
 
 #============HELPERS============
 
-def token(type, char):
-    return { 'type': type, 'char': char }
 
 def peek(text, i):
     if i+ 1 < len(text):
