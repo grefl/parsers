@@ -24,6 +24,10 @@ def peek(text, i):
     if i+ 1 < len(text):
         return text[i+ 1]
     return False
+def next_char(text, i):
+    if i + 1 < len(text):
+        return text[i + 1]
+    return None
 
 TOKENS = {
         'heading': 'heading',
@@ -192,6 +196,35 @@ class MarkDownParser:
                     for c in temp_chars:
                         chars.append(c)
                 i += j
+            elif char == "*":
+                start = i 
+                temp_chars = []
+                temp_chars.append(char)
+                j = 0
+                peeked = peek(text, i)
+                if not peeked:
+                    chars.append(char)
+                    i +=1
+                    break
+
+                type = 'strong' if char == peeked else 'em'
+                if type == 'strong':
+                    j += 1 
+                char = next_char(text, i + j) 
+                print(f'char -> {char}')
+                while char and char != '*':
+                    temp_chars.append(char)
+                    j +=1
+                    char = next_char(text, i + j)     
+                if not char:
+                    for c in temp_chars:
+                        chars.append(c)
+                else:
+                    joined = ''.join(temp_chars[1:])
+                    string = f'<{type}>{joined}</{type}>'
+                    chars.append(string)
+                i += (j + 2)
+                print(len(text), i)
             else:
                 chars.append(char)
                 i += 1
