@@ -27,7 +27,18 @@ def next_char(text, i):
         return text[i + 1]
     return None
 
-
+def clean_yml(array):
+    return [line.split(':') for line in array if len(line.split(':')) == 2]
+def create_header_html(array):
+    valid_types = ['title', 'author']
+    map_types = {'title': 'h1', 'author': 'p'}
+    spacing = ' ' * 2
+    html = [f'{spacing}<header>']
+    for key, text in array:
+        if key in valid_types:
+            html.append(f'{spacing * 2}<{map_types[key]}>{text}</{map_types[key]}>')
+    html.append(f'{spacing}</header>')
+    return '\n'.join(html)
 #============PARSER============
 
 class MarkDownParser:
@@ -43,14 +54,31 @@ class MarkDownParser:
                 'previous_type': None,
                 'nested': False,
         }
+        self.debug_line = 0
+        self.valid_yml = ['title', 'author']
+        self.spacing = ' ' * 2
 
     
     def run(self):
         self.char = self.string[0]
+        self.html.append('<div>')
         while not self.eof() and self.char is not None:
             # if self.line_meta.start_line and self.is_whitespace():
             #    self.consume_whitespace()
-            if self.char == '-' or self.char == '*' or self.char == '+':
+            if len(self.html) == 1 and self.is_horizontal_line():
+                # current
+                yml_line = self.consume_line()
+                yml = []
+                while yml_line != '---':
+                    self.debug_line +=1
+                    yml_line = self.consume_line() 
+                    yml.append(yml_line) 
+                print('finished')
+                yml = clean_yml(yml)
+                html = create_header_html(yml) 
+                if len(html):
+                    self.html.append(html)
+            elif (self.char == '-' or self.char == '*' or self.char == '+') and peek(self.string, self.cur).isspace():
                 self.line_meta['start_line'] = False
                 lines = []
                 IN = True
@@ -74,6 +102,7 @@ class MarkDownParser:
                 line = self.consume_line()
                 self.html.append(f'<h{num_hashes}>{self.parse_line(line)}</h{num_hashes}>')
             elif self.char == '[':
+                print('parsing link')
                 curr_char = self.char
                 line = self.consume_line()
                 parsed_line = self.parse_line(curr_char + line)
@@ -84,7 +113,8 @@ class MarkDownParser:
 
             elif self.char == '\n':
                 print('new line')
-                # self.cur +=1
+                print(self.len, self.char, self.cur)
+                self.cur +=1
             elif self.char == '`' and peek(self.string, self.cur) == '`' and peek(self.string, self.cur + 1) == '`':
                 lines = []
                 line = self.consume_line()
@@ -101,12 +131,18 @@ class MarkDownParser:
                 line = self.consume_line()
                 lines.append(line)
                 self.char = self.get_char()
+            elif self.is_horizontal_line():
+                print('is horizontal line')
+                line = self.consume_line()
+                self.html.append('<hr>')
+                self.char = self.get_char()
             else:
                 save_char = self.char
-                print(save_char)
                 line = self.consume_line(strip = False)
                 self.html.append(f'<p>{self.parse_line(save_char + line)}</p>')
+                print('parsed line')
             self.char = self.get_char()           
+        self.html.append('</div>')
         self.html.append('\n')
         writable = Path('./res.html')
         writable.write_text('\n'.join(self.html))
@@ -134,6 +170,7 @@ class MarkDownParser:
                 temp_chars = []
                 j = 0
                 while state['IN'] and i + j < len(text):
+                    print(temp_chars)
                     if char == ']' and peek(text, i + j) == '(':
                         temp_chars.append(char)
                         state['next_index'] = j 
@@ -159,10 +196,15 @@ class MarkDownParser:
                         chars.append(string)
                         state['IN'] = False
                         i += j
-                        break
+                        print(f'i {i} j{j}') 
+                        # break
                     else:
                         temp_chars.append(char)
+
                     j +=1
+                    print('continue')
+                    if i + j >= len(text):
+                        break
                     char = text[i + j]
             elif char == '`':
                 start = i
@@ -200,7 +242,6 @@ class MarkDownParser:
                 if type == 'strong':
                     j += 1 
                 char = next_char(text, i + j) 
-                print(f'char -> {char}')
                 while char and char != '*':
                     temp_chars.append(char)
                     j +=1
@@ -213,7 +254,6 @@ class MarkDownParser:
                     string = f'<{type}>{joined}</{type}>'
                     chars.append(string)
                 i += (j + 2)
-                print(len(text), i)
             else:
                 chars.append(char)
                 i += 1
@@ -243,7 +283,9 @@ class MarkDownParser:
         if self.cur + 1 < self.len:
             return self.string[self.cur + 1]
         return False
-
+    def is_horizontal_line(self):
+        print('checking')
+        return self.char == '-' and (peek(self.string, self.cur) == '-' and peek(self.string, self.cur + 1) == '-')
     def eof(self):
        return self.cur >= self.len
 
