@@ -23,10 +23,14 @@ class ParsedTokenType(Enum):
     IMG = 8
 
     Blockquote = 9
+    UL         = 10
+    OL         = 10
+
 @dataclass
 class ParsedToken:
     type_: ParsedTokenType
     value: str 
+
 class Parser:
 
     def __init__(self, tokens):
@@ -68,6 +72,16 @@ class Parser:
                     if len(h1s) == 1:
                         print('here')
                         self.intermediate.append(ParsedToken(ParsedTokenType.H1, header_text))
+            elif self.current_token.type_ == TokenType.Dash and (self.prev_token is None or self.prev_token.type_ == TokenType.NewLine):
+                print('new line')
+                list_items = []
+                while self.current_token is not None and self.current_token.type_ == TokenType.Dash:
+                    list_item = self.parse_inner_block()
+                    list_items.append(list_item)
+                print('got this far')
+                print(self.current_token)
+                print(list_items)
+                self.intermediate.append(ParsedToken(ParsedTokenType.UL, list_items))
             elif self.current_token.type_ == TokenType.BlockQuoteStart:
                 symbol = self.current_token
                 block_quote_text = self.parse_inner_block() 
@@ -97,6 +111,8 @@ class Parser:
             else:
                 inner_tokens.append(self.current_token)
             self.get_token()
+        if self.current_token is not None and self.current_token.type_ == TokenType.NewLine:
+            self.get_token()
         return inner_tokens
     def parse_while(self, predicate):
         parsed_token = []
@@ -110,7 +126,7 @@ class Parser:
         return parsed_token
 
 def main():
-    file_string = Path('./image.md').read_text()
+    file_string = Path('./list.md').read_text()
 
     p = Lexer(file_string)
 
