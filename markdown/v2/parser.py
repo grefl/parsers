@@ -24,7 +24,9 @@ class ParsedTokenType(Enum):
 
     Blockquote = 9
     UL         = 10
-    OL         = 10
+    OL         = 11
+    LI          = 12
+    H           = 13
 
 @dataclass
 class ParsedToken:
@@ -59,6 +61,7 @@ class Parser:
             
     def parse(self):
         while self.get_token() is not None: 
+            print('staaaaaaaaaaaaaaaaaaaarrrrrrrrrrrrrrrrrrrrttttttttttttttt')
             if self.current_token.type_ == TokenType.Hash_Tag:
                 print('h1')
                 if self.prev_token is None or self.prev_token.type_ == TokenType.NewLine:
@@ -73,19 +76,23 @@ class Parser:
                         print('here')
                         self.intermediate.append(ParsedToken(ParsedTokenType.H1, header_text))
             elif self.current_token.type_ == TokenType.Dash and (self.prev_token is None or self.prev_token.type_ == TokenType.NewLine):
-                print('new line')
+                print('BEGIN!!!!!!!!!!!!')
                 list_items = []
                 list_items.append(Token(None, TokenType.NewLine, '\n'))
                 while self.current_token is not None and self.current_token.type_ == TokenType.Dash:
-                    list_item = self.parse_inner_block()
-                    for item in list_item:
-                        list_items.append(item)
+                    res = self.parse_inner_block()
+                    p_children = []
+                    for item in res:
+                        p_children.append(item)
+                    P = ParsedToken(ParsedTokenType.LI, p_children)
                     # FIXME
+                    list_items.append(P)
                     list_items.append(Token(None, TokenType.NewLine, '\n'))
                 print('got this far')
                 print(self.current_token)
                 print(list_items)
                 self.intermediate.append(ParsedToken(ParsedTokenType.UL, list_items))
+                print('FINISH!!!!!!!!!!!!')
             elif self.current_token.type_ == TokenType.BlockQuoteStart:
                 symbol = self.current_token
                 block_quote_text = self.parse_inner_block() 
@@ -130,7 +137,7 @@ class Parser:
         return parsed_token
 
 def main():
-    file_string = Path('./list.md').read_text()
+    file_string = Path('./tiny.md').read_text()
 
     p = Lexer(file_string)
 
