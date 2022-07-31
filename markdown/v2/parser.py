@@ -4,7 +4,7 @@ from enum import Enum
 from pathlib import Path
 from pprint import pprint, pformat
 import unittest
-from lexer import Lexer, TokenType
+from lexer import Lexer,Token, TokenType
 # lambda x: x.type_ != TokenType.RightParen or x.type_ != TokenType.NewLine
 def DEBUG(x): 
     if x.type_ == TokenType.NewLine or x.type_ == TokenType.RightParen:
@@ -75,9 +75,13 @@ class Parser:
             elif self.current_token.type_ == TokenType.Dash and (self.prev_token is None or self.prev_token.type_ == TokenType.NewLine):
                 print('new line')
                 list_items = []
+                list_items.append(Token(None, TokenType.NewLine, '\n'))
                 while self.current_token is not None and self.current_token.type_ == TokenType.Dash:
                     list_item = self.parse_inner_block()
-                    list_items.append(list_item)
+                    for item in list_item:
+                        list_items.append(item)
+                    # FIXME
+                    list_items.append(Token(None, TokenType.NewLine, '\n'))
                 print('got this far')
                 print(self.current_token)
                 print(list_items)

@@ -20,7 +20,8 @@ class TokenType(Enum):
     Ordered_List_Item = 0
     Text              = 1
     NewLine           = 2
-    Unknown           = 3 
+    WhiteSpace        = 3
+    Unknown           = 4 
 
 @dataclass
 class Token:
@@ -84,6 +85,8 @@ class Lexer:
             elif is_whitespace(token):
                 if token == '\n':
                     self.tokens.append(Token(None, TokenType.NewLine, token))
+                else:
+                    self.tokens.append(Token(None, TokenType.WhiteSpace, token))
             elif is_alphanumeric(token):
                 lexed_token = self.try_to_lex_text(token)
                 self.tokens.append(Token(None, TokenType.Text, lexed_token))
