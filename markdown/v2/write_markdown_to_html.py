@@ -9,6 +9,24 @@ def DEBUG(*vals):
 def is_block_element(token_type):
     return token_type == ParsedTokenType.IMG or token_type == ParsedTokenType.H1 or token_type == ParsedTokenType.P or token_type == ParsedTokenType.UL
 
+def get_header_type(token_type):
+    if token_type == ParsedTokenType.H1:
+        return 1 
+    elif token_type == ParsedTokenType.H2:
+        return 2 
+    elif token_type == ParsedTokenType.H3:
+        return 3 
+    elif token_type == ParsedTokenType.H4:
+        return 4 
+    elif token_type == ParsedTokenType.H5:
+        return 5 
+    return 6
+
+def is_header(token_type):
+    return token_type == ParsedTokenType.H1 or token_type == ParsedTokenType.H2 \
+        or token_type == ParsedTokenType.H3 or token_type == ParsedTokenType.H4 \
+        or token_type == ParsedTokenType.H5 or token_type == ParsedTokenType.H6 \
+
 def unwind_image(values):
     output = []
     output.append('<img ')
@@ -21,11 +39,50 @@ def unwind_image(values):
             output.append(f'alt="{val.value}"')
 
         elif val.type_ == TokenType.LeftParen:
+            url = ''
             index +=1
-            url = values[index] 
-            output.append(f'src="{url.value}"')
+            val = values[index]
+            while index < len(values) and values[index].type_ != TokenType.RightParen:
+                DEBUG("THE URL", url)
+                url += values[index].value
+                index +=1
+
+            DEBUG("APPEND URL", url)
+            output.append(f'src="{url}"')
         index +=1
     output.append('/>')
+    return ''.join(output)
+def unwind_ATag(values):
+    output = []
+    output.append('<a ')
+    index = 0
+    text = []
+    while index < len(values):
+        val = values[index]
+        if val.type_ == TokenType.LeftBracket:
+            index +=1
+            while index < len(values):
+                if values[index].type_ == TokenType.RightBracket:
+                    break
+                print(text)
+                text.append(values[index].value)
+                index +=1
+        elif val.type_ == TokenType.LeftParen:
+            url = ''
+            index +=1
+            val = values[index]
+            while index < len(values):
+                if values[index].type_ == TokenType.RightParen:
+                    break
+                url += values[index].value
+                index +=1
+
+
+            output.append(f'href="{url}"')
+        index +=1
+    output.append('>')
+    output.append(''.join(text))
+    output.append('</a>')
     return ''.join(output)
 
 class ReadTokensToWriteIntoHtml:
@@ -45,14 +102,20 @@ class ReadTokensToWriteIntoHtml:
         if token.type_ == ParsedTokenType.IMG:
            IMG = unwind_image(token.value) 
            return IMG
-        elif token.type_ == ParsedTokenType.H1:
+        elif is_header(token.type_):
             output = []
-            output.append('<h1>')
+            header_type = get_header_type(token.type_) 
+            DEBUG("HEEEEEEEEERE")
+            DEBUG(token.type_)
+            output.append(f'<h{header_type}>')
             for val in token.value:
                 inner = self.recurse(val)
                 output.append(inner)
-            output.append('</h1>')
+            output.append(f'</{header_type}>')
             return ''.join(output)
+        elif token.type_ == ParsedTokenType.A:
+            A = unwind_ATag(token.value)
+            return A
         elif token.type_ == ParsedTokenType.P:
             output = []
             DEBUG("PARSING Paragraph")

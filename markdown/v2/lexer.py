@@ -14,7 +14,9 @@ class TokenType(Enum):
     RightBracket      = ']'
     LeftParen         = '('
     RightParen        = ')'
-    BlockQuoteStart   = '>'
+    GT                = '>'
+    LT                = '<'
+    BackSlash         = '/'
     Shebang           = '!'
     Tilda             = '`'
     Ordered_List_Item = 0
@@ -77,7 +79,11 @@ class Lexer:
             elif token == ')':
                 self.tokens.append(Token(None, TokenType.RightParen, token))
             elif token == '>':
-                self.tokens.append(Token(None, TokenType.BlockQuoteStart, token))
+                self.tokens.append(Token(None, TokenType.GT, token))
+            elif token == '<':
+                self.tokens.append(Token(None, TokenType.LT, token))
+            elif token == '/':
+                self.tokens.append(Token(None, TokenType.BackSlash, token))
             elif token == '!':
                 self.tokens.append(Token(None, TokenType.Shebang, token))
             elif token == '~':

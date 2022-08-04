@@ -11,6 +11,19 @@ def DEBUG(x):
         return False
     return True
 
+def get_header_type(length):
+    if length == 1:
+        return ParsedTokenType.H1
+    elif length == 2:
+        return ParsedTokenType.H2
+    elif length == 3:
+        return ParsedTokenType.H3
+    elif length == 4:
+        return ParsedTokenType.H4
+    elif length == 5:
+        return ParsedTokenType.H5
+    return ParsedTokenType.H6
+
 class ParsedTokenType(Enum):
     H1 = 0
     H2 = 1 
@@ -22,11 +35,14 @@ class ParsedTokenType(Enum):
     A  = 7
     IMG = 8
 
-    Blockquote = 9
-    UL         = 10
-    OL         = 11
-    LI          = 12
-    H           = 13
+    LT         = 9
+    GT         = 10 
+    BackSlash  = 11 
+    UL         = 12
+    OL         = 13
+    LI          = 14
+    H           = 15
+    HTML        = 16
 
 @dataclass
 class ParsedToken:
@@ -72,9 +88,11 @@ class Parser:
                     print(h1s)
                     # header_text = self.parse_while(lambda x: x.type_ != TokenType.NewLine)
                     header_text = self.parse_inner_block()
-                    if len(h1s) == 1:
+                    print("[parser] H1s")
+                    print(h1s)
+                    if len(h1s) >= 1:
                         print('here')
-                        self.intermediate.append(ParsedToken(ParsedTokenType.H1, header_text))
+                        self.intermediate.append(ParsedToken(get_header_type(len(h1s)), header_text))
             elif self.current_token.type_ == TokenType.Dash and (self.prev_token is None or self.prev_token.type_ == TokenType.NewLine):
                 print('BEGIN!!!!!!!!!!!!')
                 list_items = []
@@ -93,10 +111,18 @@ class Parser:
                 print(list_items)
                 self.intermediate.append(ParsedToken(ParsedTokenType.UL, list_items))
                 print('FINISH!!!!!!!!!!!!')
-            elif self.current_token.type_ == TokenType.BlockQuoteStart:
+            elif self.current_token.type_ == TokenType.LT:
                 symbol = self.current_token
                 block_quote_text = self.parse_inner_block() 
-                self.intermediate.append(ParsedToken(ParsedTokenType.Blockquote, block_quote_text))
+                self.intermediate.append(ParsedToken(ParsedTokenType.LT, block_quote_text))
+            elif self.current_token.type_ == TokenType.GT:
+                symbol = self.current_token
+                block_quote_text = self.parse_inner_block() 
+                self.intermediate.append(ParsedToken(ParsedTokenType.GT, block_quote_text))
+            elif self.current_token.type_ == TokenType.BackSlash:
+                symbol = self.current_token
+                block_quote_text = self.parse_inner_block() 
+                self.intermediate.append(ParsedToken(ParsedTokenType.BackSlash, block_quote_text))
             elif self.current_token.type_ == TokenType.NewLine:
                 print('new line')
                 continue
@@ -110,15 +136,29 @@ class Parser:
         while self.current_token is not None and self.current_token.type_ != TokenType.NewLine:
             print('here')
             if self.current_token.type_ == TokenType.Shebang and self.next_token.type_ == TokenType.LeftBracket:
-                print('attempt')
                 _shebang = self.current_token
                 maybe_image = self.parse_while(DEBUG)
-                print('done')
                 if self.current_token.type_ == TokenType.RightParen:
                     maybe_image.append(self.current_token)
                     inner_tokens.append(ParsedToken(ParsedTokenType.IMG, maybe_image))
                 else:
                     inner_tokens.append(maybe_image)
+            elif self.current_token.type_ == TokenType.LeftBracket:
+                maybe_link = self.parse_while(lambda x: not (x.type_ == TokenType.RightBracket or x.type_ == TokenType.NewLine))
+                print(maybe_link)
+                if self.current_token.type_ == TokenType.NewLine:
+                    for token in maybe_link:
+                        inner_tokens.append(token)
+                elif self.current_token.type_ == TokenType.RightBracket and self.next_token.type_ == TokenType.LeftParen:
+                    right_bracket = self.current_token
+                    maybe_link = [*maybe_link,right_bracket,*self.parse_while(lambda x: not (x.type_ == TokenType.RightParen or x.type_ == TokenType.NewLine))]
+                    print(maybe_link)
+                    maybe_link.append(self.current_token)
+                    self.get_token()
+                    inner_tokens.append(ParsedToken(ParsedTokenType.A, maybe_link))
+                else:
+                    raise Exception("cannot parse element")
+
             else:
                 inner_tokens.append(self.current_token)
             self.get_token()
@@ -137,7 +177,7 @@ class Parser:
         return parsed_token
 
 def main():
-    file_string = Path('./tiny.md').read_text()
+    file_string = Path('./one.md').read_text()
 
     p = Lexer(file_string)
 
