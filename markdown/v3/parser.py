@@ -7,6 +7,12 @@ def header(header_type, text):
 def paragraph(text):
     return f'<p>{text}</p>'
 
+def bold(text):
+    return f'<strong>{text}</strong>'
+
+def italic(text):
+    return f'<i>{text}</i>'
+
 def a_tag(url, text):
     return f'<a url="{url}">{text}</a>'
 
@@ -14,6 +20,7 @@ def img(src, alt):
     return f'<img src="{src}" alt="{alt}" />'
 
 class Parser:
+
     def __init__(self, lexed_tokens):
         self.tokens = lexed_tokens
         self.current_token = None
@@ -78,8 +85,9 @@ class Parser:
                 header = self.parse_header()
                 print(header)
                 self.html.append(header)
-            elif self.current_token == TokenType.LeftBracket:
-                print('unimplemented yo') 
+            elif self.current_token.type_ == TokenType.LeftBracket:
+                paragraph = self.parse_paragraph()
+                self.html.append(paragraph)
             else:
                 paragraph = self.parse_paragraph()
                 self.html.append(paragraph)
@@ -97,6 +105,19 @@ class Parser:
                 if error:
                     raise Exception("not a url, oh no!")
                 parsed_html.append(url_or_text)
+            elif token.type_ == TokenType.Star:
+                print("star")
+                print(tokens[index:])
+                if tokens[index+1].type_ == TokenType.Star:
+                    index, bold, error = self.try_parse_bold(index, tokens)
+                    if error:
+                        raise Exception("not bold!")
+                    parsed_html.append(bold)
+                else:
+                    index, italic, error = self.try_parse_italic(index, tokens)
+                    if error:
+                        raise Exception("not an italic!")
+                    parsed_html.append(italic)
             elif token.type_ == TokenType.Shebang and tokens[index+1].type_ == TokenType.LeftBracket:
                 print('image parsing')
                 index, img_or_text, error = self.try_parse_img(index, tokens)
@@ -148,6 +169,34 @@ class Parser:
             index += 1
 
         return index, img(''.join(url), ''.join(text)), False
+
+    def try_parse_bold(self, index, tokens):
+        index += 1 
+        text = []
+        while index < len(tokens):
+            token = tokens[index]
+            if token.type_ == TokenType.Star and tokens[index+1].type_ == TokenType.Star:
+                index +=2
+                return index, bold(''.join(text)), False
+            else:
+                text.append(token.value)
+            index += 1
+
+        return index, bold(''.join(text)), False
+
+    def try_parse_italic(self, index, tokens):
+        index += 1 
+        text = []
+        while index < len(tokens):
+            token = tokens[index]
+            if token.type_ == TokenType.Star:
+                index += 1
+                return index, italic(''.join(text)), False
+            else:
+                text.append(token.value)
+            index += 1
+
+        return index, italic(''.join(text)), False
 def main():
     file_string = Path('./temp').read_text()
     l = Lexer(file_string)
