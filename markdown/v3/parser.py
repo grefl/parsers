@@ -7,6 +7,12 @@ def header(header_type, text):
 def paragraph(text):
     return f'<p>{text}</p>'
 
+def li(text):
+    return f'<li>{text}</li>'
+
+def ul(list_items):
+    return f'<ul>{list_items}</ul>'
+
 def bold(text):
     return f'<strong>{text}</strong>'
 
@@ -88,6 +94,13 @@ class Parser:
             elif self.current_token.type_ == TokenType.LeftBracket:
                 paragraph = self.parse_paragraph()
                 self.html.append(paragraph)
+            elif self.current_token.type_ == TokenType.Dash:
+                print('begin')
+                list_items = self.find_all_list_items()
+                list_items = [self.parse_block(line) for line in list_items]
+                list_items_string = '\n'.join([li(test) for test in list_items])
+                ul_tag  = ul(list_items_string)
+                self.html.append(ul_tag)
             else:
                 paragraph = self.parse_paragraph()
                 self.html.append(paragraph)
@@ -124,6 +137,8 @@ class Parser:
                 if error:
                     raise Exception("not an image!")
                 parsed_html.append(img_or_text)
+            else:
+                parsed_html.append(token.value)
             index +=1
         return ''.join(parsed_html)
 
@@ -197,6 +212,33 @@ class Parser:
             index += 1
 
         return index, italic(''.join(text)), False
+    def consume_while(self, condition):
+        while condition():
+            self.next()
+
+    def find_all_list_items(self):
+        self.next()
+        list_items = []
+        list_item  = []
+        print('debug list items')
+        print(self.tokens[self.index:])
+        while not self.eof():
+            if self.current_token.type_ == TokenType.NewLine:
+                list_items.append(list_item)
+                print('here')
+                print(self.current_token.type_)
+                print(self.next_token.type_)
+                self.next()
+                print(self.current_token.type_)
+                print(self.next_token.type_)
+                if self.current_token.type_ == TokenType.Dash: # should try and parse until newline
+                    list_item = []
+                else:
+                    return list_items
+            else:
+                list_item.append(self.current_token)
+            self.next()
+        return list_items
 def main():
     file_string = Path('./temp').read_text()
     l = Lexer(file_string)
