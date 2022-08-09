@@ -32,7 +32,7 @@ class Parser:
         self.current_token = None
         self.next_token    = None
         self.html = []
-        self.index = 0
+        self.index =  -1
 
     def next(self):
         self.current_token = self.next_token
@@ -89,7 +89,6 @@ class Parser:
             if self.current_token.type_ == TokenType.Hash:
                 print("it's a hash")
                 header = self.parse_header()
-                print(header)
                 self.html.append(header)
             elif self.current_token.type_ == TokenType.LeftBracket:
                 paragraph = self.parse_paragraph()
@@ -101,6 +100,9 @@ class Parser:
                 list_items_string = '\n'.join([li(test) for test in list_items])
                 ul_tag  = ul(list_items_string)
                 self.html.append(ul_tag)
+            elif self.current_token.type_ == TokenType.Tilda:
+                if self.next_token.type_ == TokenType.Tilda and self.peek(0):
+                    code_block = self.try_parse_code_block()
             else:
                 paragraph = self.parse_paragraph()
                 self.html.append(paragraph)
@@ -119,8 +121,6 @@ class Parser:
                     raise Exception("not a url, oh no!")
                 parsed_html.append(url_or_text)
             elif token.type_ == TokenType.Star:
-                print("star")
-                print(tokens[index:])
                 if tokens[index+1].type_ == TokenType.Star:
                     index, bold, error = self.try_parse_bold(index, tokens)
                     if error:
@@ -132,7 +132,6 @@ class Parser:
                         raise Exception("not an italic!")
                     parsed_html.append(italic)
             elif token.type_ == TokenType.Shebang and tokens[index+1].type_ == TokenType.LeftBracket:
-                print('image parsing')
                 index, img_or_text, error = self.try_parse_img(index, tokens)
                 if error:
                     raise Exception("not an image!")
@@ -212,6 +211,18 @@ class Parser:
             index += 1
 
         return index, italic(''.join(text)), False
+
+    def try_parse_code_block(self):
+        tokens = []
+        self.next()
+        self.next()
+        while self.next_token.type_ != TokenType.Tilda \
+              and self.current_token.type_ != TokenType.Tilda \
+              and self.peek(1).type_ != TokenType.Tilda:
+            tokens.append(self.current_token.value)
+            self.next()
+        return ''.join(tokens)
+
     def consume_while(self, condition):
         while condition():
             self.next()
@@ -221,16 +232,10 @@ class Parser:
         list_items = []
         list_item  = []
         print('debug list items')
-        print(self.tokens[self.index:])
         while not self.eof():
             if self.current_token.type_ == TokenType.NewLine:
                 list_items.append(list_item)
-                print('here')
-                print(self.current_token.type_)
-                print(self.next_token.type_)
                 self.next()
-                print(self.current_token.type_)
-                print(self.next_token.type_)
                 if self.current_token.type_ == TokenType.Dash: # should try and parse until newline
                     list_item = []
                 else:
