@@ -22,7 +22,6 @@ def get_debug_settings(cmd):
     DEBUG_STATE = DEBUG_CONFIG.Loud
 
 def DEBUG(*vals):
-    debug_config = DEBUG_CONFIG.Quiet
     if DEBUG_STATE == DEBUG_CONFIG.Quiet:
         return
     print('[LEX] ', *vals)
