@@ -167,6 +167,7 @@ class Lexer:
                     self.tokens.append(Token(keyword_or_literal, TokenType.Literal, self.file_name))
 
             self.index += 1
+
     def debug(self):
         for token in self.tokens:
             DEBUG(token)
