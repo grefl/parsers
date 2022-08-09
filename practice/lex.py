@@ -59,6 +59,7 @@ class TokenType(Enum):
     Literal      = 4
     Int          = 5
     Float        = 6 
+    String       = 7
 @dataclass
 class Token:
     value: str
@@ -81,6 +82,7 @@ class Lexer:
             return None
         return self.string[self.index + amount] == char
 
+    # TODO:(greg) add float lexing next
     def try_lex_number(self):
         number = []
         while not self.eof() and is_numeric(c := self.string[self.index]):
@@ -94,6 +96,18 @@ class Lexer:
                 literal.append(c)
                 self.index +=1
         return ''.join(literal)
+    def parse_string_or_error(self):
+        string = []
+        start_index = self.index
+        self.index +=1
+        while not self.eof() and (c := self.string[self.index]) != '"':
+            string.append(c)
+            self.index += 1
+        if self.eof():
+            self.errors.append("Couldn't pass string literal")
+            return
+        DEBUG(string)
+        return ''.join(string)
 
     def lex(self):
 
@@ -120,6 +134,9 @@ class Lexer:
                     self.tokens.append(Token(int_or_float, TokenType.Float, self.file_name))
                 else:
                     self.tokens.append(Token(int_or_float, TokenType.Int, self.file_name))
+            elif token == '"':
+                parsed_string = self.parse_string_or_error()
+                self.tokens.append(Token(parsed_string, TokenType.String, self.file_name))
             else:
                 keyword_or_literal = self.try_parse_literal_or_keyword()
                 if keyword_or_literal in KEYWORDS:
