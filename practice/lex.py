@@ -6,7 +6,24 @@ from pathlib import Path
 #         DEBUG STUFF 
 # --------------------------------
 
+class DEBUG_CONFIG(Enum):
+    Quiet = 0
+    Loud  = 1
 
+DEBUG_STATE = DEBUG_CONFIG.Loud
+
+def get_debug_settings(cmd):
+    if cmd in ['q', '-q', or '--quiet']:
+        DEBUG_STATE = DEBUG_CONFIG.Quiet
+        return
+
+    DEBUG_STATE = DEBUG_CONFIG.Loud
+
+def DEBUG(*vals):
+    debug_config = DEBUG_CONFIG.Quiet
+    if DEBUG_STATE == DEBUG_CONFIG.Quiet:
+        return
+    print('[LEX] ', *vals)
 
 # --------------------------------
 #          Helpers
