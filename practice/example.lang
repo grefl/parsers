@@ -1,0 +1,19 @@
+let val = 1
+const val = "hi"
+
+def main(argv):
+  if val == argv[1]:
+    print("hi there")
+  elif val >= 2:
+    print("whoops")
+  return true
+
+
+
+
+def more_examples(values):
+  return none
+
+let nums = [1,2,3]
+let DEBUG = "DEBUG"
+let test = true if DEBUG != none else false 
