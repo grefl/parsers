@@ -120,7 +120,10 @@ class Lexer:
             return
         DEBUG(string)
         return ''.join(string)
-
+    def consume_comment(self):
+        self.index +=1
+        while not self.eof() and (c := self.string[self.index]) != '\n':
+            self.index += 1
     def lex(self):
 
         while not self.eof():
@@ -129,6 +132,9 @@ class Lexer:
                 DEBUG("Skipping whitespace for now")
                 self.index +=1
                 continue
+            elif token == '#':
+                self.consume_comment()
+                DEBUG('consuming comment')
             elif token == '!':
                 if self.peek_at('=', 1):
                     self.index +=1
