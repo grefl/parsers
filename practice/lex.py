@@ -41,6 +41,8 @@ def is_special_char(token):
     return token in SPECIAL_CHARS 
 def is_alphanumeric(token):
     return is_alpha(token) or is_numeric(token) or is_special_char(token)
+def is_whitespace(token):
+    return token == ' ' or token == '\t' or token == '\n'
 # --------------------------------
 #            Data 
 # --------------------------------
@@ -108,13 +110,16 @@ class Lexer:
             return
         DEBUG(string)
         return ''.join(string)
-
     def lex(self):
 
 
         while not self.eof():
             token = self.string[self.index]
-            if token == '=':
+            if  is_whitespace(token):
+                DEBUG("Skipping whitespace for now")
+                self.index +=1
+                continue
+            elif token == '=':
                 if self.peek_at('=', 1):
                     self.index +=1
                     token += self.string[self.index]
