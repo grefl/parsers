@@ -19,8 +19,8 @@ def bold(text):
 def italic(text):
     return f'<i>{text}</i>'
 
-def a_tag(url, text):
-    return f'<a url="{url}">{text}</a>'
+def a_tag(href, text):
+    return f'<a href="{href}">{text}</a>'
 
 def img(src, alt):
     return f'<img src="{src}" alt="{alt}" />'
