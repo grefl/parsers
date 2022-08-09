@@ -12,6 +12,7 @@ class DEBUG_CONFIG(Enum):
 
 DEBUG_STATE = DEBUG_CONFIG.Loud
 KEYWORDS = set(['let', 'const', 'def', 'in', 'for', 'none', 'false', 'true'])
+SPECIAL_CHARS = set(['_'])
 
 def get_debug_settings(cmd):
     if cmd in ['q', '-q', '--quiet']:
@@ -26,11 +27,12 @@ def DEBUG(*vals):
         return
     print('[LEX] ', *vals)
 
+
 # --------------------------------
 #          Helpers
 # --------------------------------
 
-SPECIAL_CHARS = set(['_'])
+
 def is_alpha(token):
     return token >= 'a' and token <= 'z' or token >= 'A' and token <= 'Z'
 
@@ -39,13 +41,17 @@ def is_numeric(token):
 
 def is_special_char(token):
     return token in SPECIAL_CHARS 
+
 def is_alphanumeric(token):
     return is_alpha(token) or is_numeric(token) or is_special_char(token)
 def is_whitespace(token):
     return token == ' ' or token == '\t' or token == '\n'
+
+
 # --------------------------------
 #            Data 
 # --------------------------------
+
 class TokenType(Enum):
     Not          = "!"
     NotEql       = "!="
@@ -63,6 +69,7 @@ class TokenType(Enum):
     Int          = 5
     Float        = 6 
     String       = 7
+
 @dataclass
 class Token:
     value: str
@@ -70,6 +77,7 @@ class Token:
     file_name: str
 
 class Lexer:
+
     def __init__(self, string, file_name):
         self.tokens = []
         self.index  = 0
@@ -99,6 +107,7 @@ class Lexer:
                 literal.append(c)
                 self.index +=1
         return ''.join(literal)
+
     def parse_string_or_error(self):
         string = []
         start_index = self.index
@@ -111,8 +120,8 @@ class Lexer:
             return
         DEBUG(string)
         return ''.join(string)
-    def lex(self):
 
+    def lex(self):
 
         while not self.eof():
             token = self.string[self.index]
@@ -157,15 +166,18 @@ class Lexer:
                 else:
                     self.tokens.append(Token(keyword_or_literal, TokenType.Literal, self.file_name))
 
-
             self.index += 1
     def debug(self):
         for token in self.tokens:
             DEBUG(token)
+
 if __name__ == "__main__":
+
     file_name = 'example.lang'
     file_string = Path(file_name).read_text()
+
     l = Lexer(file_string, file_name)
+
     l.lex()
     l.debug()
 
