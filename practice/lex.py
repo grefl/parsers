@@ -44,6 +44,7 @@ def is_special_char(token):
 
 def is_alphanumeric(token):
     return is_alpha(token) or is_numeric(token) or is_special_char(token)
+
 def is_whitespace(token):
     return token == ' ' or token == '\t' or token == '\n'
 
