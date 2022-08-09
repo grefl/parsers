@@ -11,9 +11,10 @@ class DEBUG_CONFIG(Enum):
     Loud  = 1
 
 DEBUG_STATE = DEBUG_CONFIG.Loud
+KEYWORDS = set(['let', 'const', 'def', 'in', 'for', 'none', 'false', 'true'])
 
 def get_debug_settings(cmd):
-    if cmd in ['q', '-q', or '--quiet']:
+    if cmd in ['q', '-q', '--quiet']:
         DEBUG_STATE = DEBUG_CONFIG.Quiet
         return
 
@@ -28,6 +29,7 @@ def DEBUG(*vals):
 # --------------------------------
 #          Helpers
 # --------------------------------
+
 SPECIAL_CHARS = set(['_'])
 def is_alpha(token):
     return token >= 'a' and token <= 'z' or token >= 'A' and token <= 'Z'
@@ -37,21 +39,38 @@ def is_numeric(token):
 
 def is_special_char(token):
     return token in SPECIAL_CHARS 
-
+def is_alphanumeric(token):
+    return is_alpha(token) or is_numeric(token) or is_special_char(token)
 # --------------------------------
 #            Data 
 # --------------------------------
-
+class TokenType(Enum):
+    Shebang      = "!"
+    Assign       = "="
+    Eql          = "=="
+    Greater      = '>'
+    GreaterEql   = '>='
+    Less         = '<'
+    LessEql      = '<='
+    Newline      = 0
+    Whitespace   = 1
+    Unknown      = 2
+    Keyword      = 3
+    Literal      = 4
+    Int          = 5
+    Float        = 6 
+@dataclass
 class Token:
     value: str
     ttype: TokenType
-    file_name: str,
+    file_name: str
 
 class Lexer:
-    def __init__(self):
+    def __init__(self, string, file_name):
         self.tokens = []
         self.index  = 0
-        self.string = None
+        self.string = string
+        self.file_name = file_name 
         self.errors = []
 
     def eof(self):
@@ -62,20 +81,61 @@ class Lexer:
             return None
         return self.string[self.index + amount] == char
 
-    def lex(self, string, file_name):
-        self.string = string
+    def try_lex_number(self):
+        number = []
+        while not self.eof() and is_numeric(c := self.string[self.index]):
+                number.append(c)
+                self.index +=1
+        return ''.join(number)
+
+    def try_parse_literal_or_keyword(self):
+        literal = []
+        while not self.eof() and is_alphanumeric(c := self.string[self.index]):
+                literal.append(c)
+                self.index +=1
+        return ''.join(literal)
+
+    def lex(self):
 
 
         while not self.eof():
             token = self.string[self.index]
-            if token = '=':
+            if token == '=':
                 if self.peek_at('=', 1):
-                    self.tokens.append(Token()))
+                    self.index +=1
+                    token += self.string[self.index]
+                    self.tokens.append(Token(token, TokenType.Eql, self.file_name))
+                else:
+                    self.tokens.append(Token(token, TokenType.Assign, self.file_name))
+            elif token == '>':
+                if self.peek_at('=', 1):
+                    self.index +=1
+                    token += self.string[self.index]
+                    self.tokens.append(Token(token, TokenType.GreaterEql, self.file_name))
+                else:
+                    self.tokens.append(Token(token, TokenType.Greater, self.file_name))
+            elif is_numeric(token):
+                int_or_float = self.try_lex_number()
+                if '.' in int_or_float:
+                    self.tokens.append(Token(int_or_float, TokenType.Float, self.file_name))
+                else:
+                    self.tokens.append(Token(int_or_float, TokenType.Int, self.file_name))
+            else:
+                keyword_or_literal = self.try_parse_literal_or_keyword()
+                if keyword_or_literal in KEYWORDS:
+                    self.tokens.append(Token(keyword_or_literal, TokenType.Keyword, self.file_name))
+                else:
+                    self.tokens.append(Token(keyword_or_literal, TokenType.Literal, self.file_name))
 
 
             self.index += 1
+    def debug(self):
+        for token in self.tokens:
+            DEBUG(token)
 if __name__ == "__main__":
-    l = Lexer()
-    l.lex(file_string, file_name)
+    file_name = 'example.lang'
+    file_string = Path(file_name).read_text()
+    l = Lexer(file_string, file_name)
+    l.lex()
     l.debug()
 
