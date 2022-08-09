@@ -47,7 +47,8 @@ def is_whitespace(token):
 #            Data 
 # --------------------------------
 class TokenType(Enum):
-    Shebang      = "!"
+    Not          = "!"
+    NotEql       = "!="
     Assign       = "="
     Eql          = "=="
     Greater      = '>'
@@ -119,6 +120,13 @@ class Lexer:
                 DEBUG("Skipping whitespace for now")
                 self.index +=1
                 continue
+            elif token == '!':
+                if self.peek_at('=', 1):
+                    self.index +=1
+                    token += self.string[self.index]
+                    self.tokens.append(Token(token, TokenType.NotEql, self.file_name))
+                else:
+                    self.tokens.append(Token(token, TokenType.Not, self.file_name))
             elif token == '=':
                 if self.peek_at('=', 1):
                     self.index +=1
