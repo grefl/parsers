@@ -120,10 +120,12 @@ class Lexer:
             return
         DEBUG(string)
         return ''.join(string)
+
     def consume_comment(self):
         self.index +=1
         while not self.eof() and (c := self.string[self.index]) != '\n':
             self.index += 1
+
     def lex(self):
 
         while not self.eof():
