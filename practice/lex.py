@@ -11,7 +11,7 @@ class DEBUG_CONFIG(Enum):
     Loud  = 1
 
 DEBUG_STATE = DEBUG_CONFIG.Loud
-KEYWORDS = set(['let', 'const', 'def', 'in', 'for', 'none', 'false', 'true'])
+KEYWORDS = set(['let', 'const', 'def', 'in', 'for', 'none', 'false', 'true', 'return'])
 SPECIAL_CHARS = set(['_'])
 
 def get_debug_settings(cmd):
@@ -69,6 +69,7 @@ class TokenType(Enum):
     Int          = 5
     Float        = 6 
     String       = 7
+    Let          = 8
 
 @dataclass
 class Token:
@@ -131,7 +132,8 @@ class Lexer:
         while not self.eof():
             token = self.string[self.index]
             if  is_whitespace(token):
-                DEBUG("Skipping whitespace for now")
+                DEBUG("Skipping whitespace (except for newline) for now")
+                self.tokens.append(Token(token, TokenType.Newline, self.file_name))
                 self.index +=1
                 continue
             elif token == '#':
