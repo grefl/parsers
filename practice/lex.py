@@ -133,7 +133,8 @@ class Lexer:
             token = self.string[self.index]
             if  is_whitespace(token):
                 DEBUG("Skipping whitespace (except for newline) for now")
-                self.tokens.append(Token(token, TokenType.Newline, self.file_name))
+                if token == '\n':
+                    self.tokens.append(Token(token, TokenType.Newline, self.file_name))
                 self.index +=1
                 continue
             elif token == '#':
@@ -179,8 +180,12 @@ class Lexer:
             self.index += 1
 
     def debug(self):
+        out = []
         for token in self.tokens:
             DEBUG(token)
+            out.append(str(token))
+        Path('debug.out').write_text('\n'.join(out))
+
 
 if __name__ == "__main__":
 
