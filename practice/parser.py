@@ -1,7 +1,7 @@
 from pathlib import Path
 from dataclasses import dataclass
 from enum import Enum
-from lex import TokenType, Lexer 
+from lex import TokenType, Token, Lexer 
 
 def DEBUG(*vals):
     print('[parser] ', *vals)
@@ -19,23 +19,57 @@ def DEBUG(*vals):
 @dataclass
 class Node:
     literal: str
-
+    
 @dataclass
 class Statement:
     Node: Node
 
+    def str(self):
+        return self.Node.literal
+
 @dataclass
 class Expression:
     Node: Node
+
+    def str(self):
+        return self.Node.literal
+
+@dataclass
+class ExpressionStatement: # dumb name
+    token: Token
+    Expression: Expression 
+
+    def str(self):
+        if self.Expression is not None:
+            return self.Expression.str()
+
+        return ''
+
 
 @dataclass
 class LetStatement:
     name: str
     value: Expression
 
+    def str(self):
+        out = []
+        out.append('let')
+        out.append(self.name)
+        out.append(' = ')
+        if self.value is not None:
+            out.append(self.value.str())
+        return ''.join(out)
+
 @dataclass
 class ReturnStatement:
     return_value: Expression
+
+    def str(self):
+        out = []
+        out.append('return ')
+        if self.value is not None:
+            out.append(self.return_value.str())
+        return ''.join(out)
 
 # ------------------------------
 #           Parser 
